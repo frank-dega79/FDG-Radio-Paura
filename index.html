@@ -3,25 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>CyberSynth Web Radio</title>
-    
+    <title>FDG Radio Paura</title>
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1088/1088513.png">
-
     <style>
+        :root {
+            --neon-primary: #ff00ff;
+            --neon-secondary: #00d2ff;
+            --bg-color: #0a0a0c;
+        }
+
+        .modalita-paura {
+            --neon-primary: #00ff41; 
+            --neon-secondary: #0d4b1a;
+        }
+
         body {
             font-family: 'Courier New', Courier, monospace;
-            background: #0a0a0c;
+            background: var(--bg-color);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
             overflow: hidden;
-            color: #00d2ff;
+            color: var(--neon-secondary);
+            transition: all 0.5s ease;
         }
 
-        /* Effetto Scanline (righe TV vecchie) sullo sfondo */
         body::before {
             content: " ";
             position: absolute;
@@ -37,52 +45,33 @@
             background: #111;
             padding: 2rem;
             border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 30px var(--neon-secondary);
             text-align: center;
             width: 360px;
             border: 1px solid #333;
             z-index: 20;
         }
 
-        /* 2. Titolo Radio con effetto Glow Neon */
         h2 { 
             text-transform: uppercase; 
             letter-spacing: 5px; 
             font-size: 1.2rem; 
-            margin-bottom: 20px; 
-            color: #ff00ff;
-            text-shadow: 0 0 8px #ff00ff, 0 0 15px #ff00ff;
+            margin-bottom: 25px; 
+            color: var(--neon-primary);
+            text-shadow: 0 0 8px var(--neon-primary);
         }
 
-        /* Area info canzone */
-        .track-info {
+        .station-display {
             background: #000;
-            padding: 12px;
+            padding: 15px;
             border: 1px solid #333;
             margin-bottom: 20px;
             border-radius: 5px;
-            min-height: 55px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        #songTitle { 
-            color: #ff00ff; 
-            font-weight: bold; 
-            font-size: 0.85rem; 
-            margin-bottom: 4px; 
+            color: var(--neon-secondary);
+            font-weight: bold;
             text-transform: uppercase;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        #artistName { 
-            color: #00d2ff; 
-            font-size: 0.75rem; 
-            opacity: 0.9;
-            text-transform: italic;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
         }
 
         .station-selector {
@@ -90,8 +79,8 @@
             padding: 10px;
             margin-bottom: 20px;
             background: #000;
-            color: #00d2ff;
-            border: 1px solid #ff00ff;
+            color: var(--neon-secondary);
+            border: 1px solid var(--neon-primary);
             outline: none;
             font-family: 'Courier New', monospace;
             cursor: pointer;
@@ -99,86 +88,86 @@
 
         #visualizer {
             width: 100%;
-            height: 80px;
+            height: 100px;
             background: #000;
             margin-bottom: 20px;
-            border-bottom: 2px solid #ff00ff;
-            border-radius: 4px;
+            border-bottom: 2px solid var(--neon-primary);
         }
+
+        .controls { display: flex; justify-content: center; gap: 20px; align-items: center; }
 
         .controls button {
             background: transparent;
-            border: 2px solid #00d2ff;
-            width: 75px;
-            height: 75px;
+            border: 2px solid var(--neon-secondary);
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            color: #00d2ff;
+            color: var(--neon-secondary);
             cursor: pointer;
             transition: 0.3s;
             font-weight: bold;
-            font-size: 1rem;
-            text-shadow: 0 0 5px #00d2ff;
         }
 
-        .controls button:hover { 
-            background: #00d2ff; 
-            color: #000; 
-            box-shadow: 0 0 25px #00d2ff; 
+        .controls button:hover { background: var(--neon-secondary); color: #000; box-shadow: 0 0 20px var(--neon-secondary); }
+
+        #pauraBtn {
+            background: transparent;
+            border: 1px solid red;
+            color: red;
+            padding: 5px 10px;
+            font-size: 0.6rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            border-radius: 3px;
         }
 
-        .volume-container {
-            margin-top: 25px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 0.8rem;
-        }
-
-        input[type=range] { flex-grow: 1; accent-color: #ff00ff; cursor: pointer; }
-
-        .status { margin-top: 15px; font-size: 0.65rem; color: #555; letter-spacing: 2px; }
+        .volume-container { margin-top: 25px; display: flex; align-items: center; gap: 10px; }
+        input[type=range] { flex-grow: 1; accent-color: var(--neon-primary); }
     </style>
 </head>
 <body>
 
 <div class="player-container">
-    <h2>CyberSynth Radio</h2>
+    <h2>FDG Radio Paura</h2>
     
-    <div class="track-info">
-        <div id="songTitle">SISTEMA PRONTO</div>
-        <div id="artistName">In attesa di connessione...</div>
-    </div>
+    <div id="stationDisplay" class="station-display">SISTEMA PRONTO</div>
     
     <select id="stationSelect" class="station-selector">
-        <optgroup label="Nightride.fm (Metadati OK)">
-            <option value="https://stream.nightride.fm/nightride.mp3" data-id="nightride">Nightride FM</option>
-            <option value="https://stream.nightride.fm/chillsynth.mp3" data-id="chillsynth">Chillsynth FM</option>
-            <option value="https://stream.nightride.fm/darksynth.mp3" data-id="darksynth">Darksynth FM</option>
-        </optgroup>      
+        <optgroup label="Progressive & Paura">
+            <option value="https://shout.m-1.fm/retro">M-1 Retro (Prog 90s)</option>
+            <option value="https://icecast.somafm.com/reit-128-mp3">SomaFM REiT (Dream)</option>
+            <option value="https://radio-record.hostingradio.ru/tm96.mp3">Record Trance Hits</option>
+        </optgroup>
+        <optgroup label="Synthwave & Retro">
+            <option value="https://stream.nightride.fm/nightride.mp3">Nightride FM</option>
+            <option value="https://stream.nightride.fm/chillsynth.mp3">Chillsynth FM</option>
+            <option value="https://radio-record.hostingradio.ru/synth8096.mp3">Radio Record Synth</option>
+        </optgroup>
+        <optgroup label="Hard Rock 80s">
+            <option value="https://ais-sa2.cdnstream1.com/b77331_128mp3">Metal Shop 80s</option>
+            <option value="https://rockantenne.de/rockhoeren/streams/hair-metal">Rock Antenne Hair</option>
+        </optgroup>
     </select>
 
     <canvas id="visualizer"></canvas>
 
     <div class="controls">
         <button id="playPauseBtn">PLAY</button>
+        <button id="pauraBtn">MODALITÀ PAURA</button>
     </div>
 
     <div class="volume-container">
-        <span>MIN</span>
+        <span>VOL</span>
         <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5">
-        <span>MAX</span>
     </div>
-
-    <div id="statusLabel" class="status">OS v1.0 - OFFLINE</div>
 </div>
 
 <script>
     const stationSelect = document.getElementById('stationSelect');
+    const stationDisplay = document.getElementById('stationDisplay');
     const playPauseBtn = document.getElementById('playPauseBtn');
+    const pauraBtn = document.getElementById('pauraBtn');
     const volumeSlider = document.getElementById('volumeSlider');
-    const statusLabel = document.getElementById('statusLabel');
-    const songTitle = document.getElementById('songTitle');
-    const artistName = document.getElementById('artistName');
     const canvas = document.getElementById('visualizer');
     const canvasCtx = canvas.getContext('2d');
 
@@ -187,31 +176,11 @@
     let isPlaying = false;
     let audioCtx, analyser, source, dataArray, bufferLength;
 
-    // Funzione per recuperare i titoli delle canzoni
-    async function fetchMetadata() {
-        const selectedOption = stationSelect.options[stationSelect.selectedIndex];
-        const stationId = selectedOption.getAttribute('data-id');
-
-        if (stationId === "none") {
-            songTitle.textContent = selectedOption.text;
-            artistName.textContent = "Streaming Live";
-            return;
-        }
-
-        try {
-            const response = await fetch('https://nightride.fm/api/v2/nowplaying');
-            const data = await response.json();
-            const info = data[stationId].nowplaying;
-            
-            songTitle.textContent = info.title;
-            artistName.textContent = info.artist;
-        } catch (e) {
-            console.log("Errore recupero metadati");
-        }
-    }
-
-    // Timer per aggiornare ogni 10 secondi
-    setInterval(fetchMetadata, 10000);
+    // Toggle Modalità Paura
+    pauraBtn.addEventListener('click', () => {
+        document.body.classList.toggle('modalita-paura');
+        pauraBtn.textContent = document.body.classList.contains('modalita-paura') ? "MODALITÀ SYNTH" : "MODALITÀ PAURA";
+    });
 
     function initVisualizer() {
         if (!audioCtx) {
@@ -236,7 +205,7 @@
         let x = 0;
         for(let i = 0; i < bufferLength; i++) {
             let barHeight = dataArray[i] / 2;
-            canvasCtx.fillStyle = `rgb(0, ${barHeight + 100}, 255)`;
+            canvasCtx.fillStyle = document.body.classList.contains('modalita-paura') ? '#00ff41' : `rgb(0, ${barHeight + 100}, 255)`;
             canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
             x += barWidth + 2;
         }
@@ -248,30 +217,27 @@
             audio.src = stationSelect.value;
             audio.play();
             playPauseBtn.textContent = 'STOP';
-            statusLabel.textContent = 'LINK ESTABLISHED';
-            fetchMetadata();
+            stationDisplay.textContent = "ON AIR: " + stationSelect.options[stationSelect.selectedIndex].text;
         } else {
             audio.pause();
             audio.src = "";
             playPauseBtn.textContent = 'PLAY';
-            statusLabel.textContent = 'PAUSED';
+            stationDisplay.textContent = "PAUSA";
         }
         isPlaying = !isPlaying;
     });
 
     stationSelect.addEventListener('change', () => {
-        fetchMetadata();
         if (isPlaying) {
             audio.src = stationSelect.value;
             audio.play();
+            stationDisplay.textContent = "ON AIR: " + stationSelect.options[stationSelect.selectedIndex].text;
+        } else {
+            stationDisplay.textContent = "PRONTO: " + stationSelect.options[stationSelect.selectedIndex].text;
         }
     });
 
     volumeSlider.addEventListener('input', (e) => audio.volume = e.target.value);
 </script>
-
 </body>
 </html>
-</html>
-
-
