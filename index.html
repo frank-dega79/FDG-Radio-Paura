@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>CyberSynth Web Radio</title>
+    
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1088/1088513.png">
+
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: #0a0a0c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            color: #00d2ff;
+        }
+
+        /* Effetto Scanline sullo sfondo */
+        body::before {
+            content: " ";
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 10;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .player-container {
+            background: #111;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.3);
+            text-align: center;
+            width: 360px;
+            border: 1px solid #333;
+            z-index: 20;
+        }
+
+        h2 { text-transform: uppercase; letter-spacing: 5px; font-size: 1.2rem; margin-bottom: 20px; color: #ff00ff; }
+
+        .station-selector {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background: #000;
+            color: #00d2ff;
+            border: 1px solid #ff00ff;
+            outline: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #visualizer {
+            width: 100%;
+            height: 100px;
+            background: #000;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ff00ff;
+            border-radius: 5px;
+        }
+
+        .controls button {
+            background: transparent;
+            border: 2px solid #00d2ff;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            color: #00d2ff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 0 10px #00d2ff;
+        }
+
+        .controls button:hover {
+            background: #00d2ff;
+            color: #000;
+            box-shadow: 0 0 20px #00d2ff;
+        }
+
+        .volume-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        input[type=range] { flex-grow: 1; accent-color: #ff00ff; }
+
+        .status { margin-top: 15px; font-size: 0.7rem; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+<div class="player-container">
+    <h2>Cyber Radio</h2>
+    
+    <select id="stationSelect" class="station-selector">
+        <optgroup label="Synthwave">
+            <option value="https://stream.nightride.fm/nightride.mp3">Nightride FM</option>
+            <option value="https://stream.nightride.fm/chillsynth.mp3">Chillsynth FM</option>
+            <option value="https://stream.nightride.fm/darksynth.mp3">Darksynth</option>
+        </optgroup>
+        <optgroup label="Ambient/Electro">
+            <option value="https://icecast.somafm.com/groovesalad-256-mp3">Groove Salad</option>
+            <option value="https://icecast.somafm.com/beatblender-128-mp3">Beat Blender</option>
+        </optgroup>
+    </select>
+
+    <canvas id="visualizer"></canvas>
+
+    <div class="controls">
+        <button id="playPauseBtn">PLAY</button>
+    </div>
+
+    <div class="volume-container">
+        <span>VOL</span>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5">
+    </div>
+
+    <div id="statusLabel" class="status">SISTEMA PRONTO</div>
+</div>
+
+<script>
+    const stationSelect = document.getElementById('stationSelect');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const statusLabel = document.getElementById('statusLabel');
+    const canvas = document.getElementById('visualizer');
+    const canvasCtx = canvas.getContext('2d');
+
+    let audio = new Audio();
+    audio.crossOrigin = "anonymous"; 
+    let isPlaying = false;
+    let audioCtx, analyser, source, dataArray, bufferLength;
+
+    function initVisualizer() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            source = audioCtx.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            analyser.fftSize = 64; 
+            bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            draw();
+        }
+    }
+
+    function draw() {
+        requestAnimationFrame(draw);
+        analyser.getByteFrequencyData(dataArray);
+        canvasCtx.fillStyle = '#000';
+        canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+        let barWidth = (canvas.width / bufferLength) * 2.5;
+        let barHeight;
+        let x = 0;
+        for(let i = 0; i < bufferLength; i++) {
+            barHeight = dataArray[i] / 2;
+            canvasCtx.fillStyle = `rgb(0, ${barHeight + 100}, 255)`;
+            canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+            x += barWidth + 2;
+        }
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+        if (!isPlaying) {
+            initVisualizer();
+            audio.src = stationSelect.value;
+            audio.play();
+            playPauseBtn.textContent = 'STOP';
+            statusLabel.textContent = 'IN ONDA...';
+        } else {
+            audio.pause();
+            audio.src = ""; 
+            playPauseBtn.textContent = 'PLAY';
+            statusLabel.textContent = 'PAUSA';
+        }
+        isPlaying = !isPlaying;
+    });
+
+    stationSelect.addEventListener('change', () => {
+        if (isPlaying) {
+            audio.src = stationSelect.value;
+            audio.play();
+        }
+    });
+
+    volumeSlider.addEventListener('input', (e) => audio.volume = e.target.value);
+</script>
+
+</body>
+</html>
