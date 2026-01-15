@@ -72,6 +72,7 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             font-size: 0.9rem;
+            min-height: 20px;
         }
 
         .station-selector {
@@ -139,6 +140,7 @@
             <option value="https://stream.nightride.fm/darksynth.mp3">Darksynth (Cyberpunk)</option>
         <optgroup label="Dance & Progressive">
             <option value="https://radiorecord.hostingradio.ru/rmx96.aacp">Radio Record Remix</option>
+            <option value="https://radiorecord.hostingradio.ru/rr_main96.mp3">Radio Record Main</option>
         </optgroup>
     </select>
 
@@ -168,6 +170,19 @@
     audio.crossOrigin = "anonymous";
     let isPlaying = false;
     let audioCtx, analyser, source, dataArray, bufferLength;
+    let wakeLock = null;
+
+    // Funzione Wake Lock per non far spegnere lo schermo
+    async function requestWakeLock() {
+        try {
+            if ('wakeLock' in navigator) {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log("WakeLock Attivo");
+            }
+        } catch (err) {
+            console.log("WakeLock Errore");
+        }
+    }
 
     // Toggle Modalità Paura
     pauraBtn.addEventListener('click', () => {
@@ -204,20 +219,32 @@
         }
     }
 
-    playPauseBtn.addEventListener('click', () => {
+    playPauseBtn.addEventListener('click', async () => {
         if (!isPlaying) {
             initVisualizer();
             audio.src = stationSelect.value;
             audio.play();
             playPauseBtn.textContent = 'STOP';
             stationDisplay.textContent = "ON AIR: " + stationSelect.options[stationSelect.selectedIndex].text;
+            
+            // Attiva blocco schermo
+            await requestWakeLock();
+            
+            isPlaying = true;
         } else {
             audio.pause();
             audio.src = "";
             playPauseBtn.textContent = 'PLAY';
             stationDisplay.textContent = "PAUSA";
+            
+            // Rilascia blocco schermo
+            if (wakeLock !== null) {
+                await wakeLock.release();
+                wakeLock = null;
+            }
+            
+            isPlaying = false;
         }
-        isPlaying = !isPlaying;
     });
 
     stationSelect.addEventListener('change', () => {
@@ -234,5 +261,3 @@
 </script>
 </body>
 </html>
-
-
